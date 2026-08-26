@@ -9,3 +9,13 @@ export const db = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
 });
+
+export async function checkDatabaseConnection() {
+  const connection = await db.getConnection();
+
+  try {
+    await connection.ping();
+  } finally {
+    connection.release();
+  }
+}

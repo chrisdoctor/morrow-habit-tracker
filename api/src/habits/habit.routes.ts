@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import {
   findHabitsByUserId,
+  findUserTimezone,
   habitExistsForUser,
   upsertHabitLog,
 } from "./habit.repository.js";
@@ -40,6 +41,17 @@ habitRoutes.put("/:habitId/logs/:date", async (req, res, next) => {
       res.status(400).json({
         error: "value must be a number between 0 and 99999999.99",
       });
+      return;
+    }
+
+    const timezone = await findUserTimezone(demoUserId);
+
+    if (timezone === null) {
+      throw new Error(`User ${demoUserId} was not found`);
+    }
+
+    if (logDate > getTodayInTimezone(timezone)) {
+      res.status(400).json({ error: "date cannot be in the future" });
       return;
     }
 
@@ -115,4 +127,22 @@ function parseLogValue(body: unknown): number | null {
   }
 
   return value;
+}
+
+function getTodayInTimezone(timezone: string): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+  const day = parts.find((part) => part.type === "day")?.value;
+
+  if (year === undefined || month === undefined || day === undefined) {
+    throw new Error(`Could not determine today for timezone ${timezone}`);
+  }
+
+  return `${year}-${month}-${day}`;
 }

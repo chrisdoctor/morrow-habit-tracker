@@ -53,10 +53,9 @@ export async function getWeeklyProgress(input: {
   const weekStart = getMonday(input.weekDate);
   const weekEnd = addDays(weekStart, 6);
   const today = getTodayInTimezone(timezone);
-  const throughDate = maxDate(weekEnd, today);
   const rows = await findProgressSourceRows({
     userId: input.userId,
-    throughDate,
+    throughDate: today,
   });
   const habits = groupRowsByHabit(rows);
   const weekDates = Array.from({ length: 7 }, (_value, index) =>
@@ -195,10 +194,6 @@ function getTodayInTimezone(timezone: string): string {
   }
 
   return `${year}-${month}-${day}`;
-}
-
-function maxDate(left: string, right: string): string {
-  return left > right ? left : right;
 }
 
 function roundToTwoDecimals(value: number): number {

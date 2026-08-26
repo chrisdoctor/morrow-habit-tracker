@@ -36,6 +36,10 @@ type HabitLogRow = RowDataPacket & {
   value: string;
 };
 
+type UserTimezoneRow = RowDataPacket & {
+  timezone: string;
+};
+
 export async function findHabitsByUserId(userId: number): Promise<Habit[]> {
   const [rows] = await db.execute<HabitRow[]>(
     `
@@ -83,6 +87,20 @@ export async function habitExistsForUser(
   );
 
   return rows.length > 0;
+}
+
+export async function findUserTimezone(userId: number): Promise<string | null> {
+  const [rows] = await db.execute<UserTimezoneRow[]>(
+    `
+      SELECT timezone
+      FROM users
+      WHERE id = ?
+      LIMIT 1
+    `,
+    [userId],
+  );
+
+  return rows[0]?.timezone ?? null;
 }
 
 export async function upsertHabitLog(input: {

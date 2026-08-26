@@ -36,6 +36,34 @@ function getLocalDateString(date: Date): string {
   return `${year}-${month}-${day}`
 }
 
+function formatHeaderDate(date: Date): string {
+  return date.toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
+async function loadProgressForDate(date: string) {
+  const response = await fetch(`/api/progress?week=${date}`)
+
+  if (!response.ok) {
+    throw new Error(`GET /api/progress failed with ${response.status}`)
+  }
+
+  return (await response.json()) as ProgressResponse
+}
+
+function abbreviateUnit(unit: string): string {
+  const units: Record<string, string> = {
+    hours: 'h',
+    minutes: 'min',
+    litres: 'L',
+  }
+
+  return units[unit] ?? unit
+}
+
 function App() {
   const [progress, setProgress] = useState<ProgressResponse | null>(null)
   const [logInputs, setLogInputs] = useState<LogInputs>({})
@@ -44,24 +72,15 @@ function App() {
   )
   const [savingHabitId, setSavingHabitId] = useState<number | null>(null)
   const [writeError, setWriteError] = useState<string | null>(null)
-  const today = getLocalDateString(new Date())
-
-  async function loadProgress() {
-    const response = await fetch(`/api/progress?week=${today}`)
-
-    if (!response.ok) {
-      throw new Error(`GET /api/progress failed with ${response.status}`)
-    }
-
-    return (await response.json()) as ProgressResponse
-  }
+  const currentDate = new Date()
+  const today = getLocalDateString(currentDate)
 
   useEffect(() => {
     let isMounted = true
 
     async function refreshProgress() {
       try {
-        const data = await loadProgress()
+        const data = await loadProgressForDate(today)
 
         if (isMounted) {
           setProgress(data)
@@ -108,7 +127,7 @@ function App() {
         throw new Error(`PUT habit log failed with ${response.status}`)
       }
 
-      const updatedProgress = await loadProgress()
+      const updatedProgress = await loadProgressForDate(today)
       setProgress(updatedProgress)
       setLogInputs((current) => ({
         ...current,
@@ -126,7 +145,10 @@ function App() {
     <main className="app-shell">
       <header className="page-header">
         <p>Morrow Habit Tracker</p>
-        <h1>Today</h1>
+        <div className="title-row">
+          <h1>Today</h1>
+          <span>{formatHeaderDate(currentDate)}</span>
+        </div>
       </header>
 
       <section className="habit-panel" aria-labelledby="progress-heading">
@@ -171,17 +193,33 @@ function App() {
                       className={day.completed ? 'day done' : 'day'}
                       title={`${day.date}${day.value === null ? '' : `: ${day.value}`}`}
                     >
-                      {new Date(`${day.date}T00:00:00`).toLocaleDateString(
-                        undefined,
-                        { weekday: 'short' },
-                      )}
+                      <span>
+                        {new Date(`${day.date}T00:00:00`).toLocaleDateString(
+                          undefined,
+                          { weekday: 'short' },
+                        )}
+                      </span>
+                      <span className="day-date">
+                        {new Date(`${day.date}T00:00:00`).toLocaleDateString(
+                          undefined,
+                          {
+                            month: '2-digit',
+                            day: '2-digit',
+                          },
+                        )}
+                      </span>
+                      <span className="day-value">
+                        {day.value === null
+                          ? '-'
+                          : `${day.value} ${abbreviateUnit(habit.unit)}`}
+                      </span>
                     </span>
                   ))}
                 </div>
 
                 <div className="log-row">
                   <label htmlFor={`habit-${habit.id}-value`}>
-                    Log {habit.unit}
+                    Log today's {habit.unit}
                   </label>
                   <input
                     id={`habit-${habit.id}-value`}

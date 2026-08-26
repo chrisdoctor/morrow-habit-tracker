@@ -61,7 +61,6 @@ Represents a user-specific health behaviour with:
 
 -   name;
 -   unit;
--   target value;
 -   frequency.
 
 The initial implementation assumes daily habits.
@@ -103,7 +102,6 @@ id
 user_id
 name
 unit
-target_value
 frequency
 is_active
 created_at
@@ -149,8 +147,8 @@ current streak and weekly completion information.
 
 ### Completion
 
-For the initial implementation, a habit is completed for a day when its
-recorded value meets or exceeds its target.
+For the initial implementation, a habit is completed for a day when a
+log exists for that habit on that local calendar date.
 
 ### Week
 
@@ -159,7 +157,7 @@ A week runs from **Monday to Sunday**.
 ### Streak
 
 A current streak is the number of consecutive local calendar days on
-which the habit target was met.
+which the habit has a log.
 
 If today's habit has not yet been completed, the streak is calculated
 from yesterday so an in-progress day does not immediately break an
@@ -186,7 +184,7 @@ most:
 -   validation and API error handling;
 -   basic dashboard behaviour.
 
-The goal is targeted confidence in domain rules and API boundaries
+The goal is focused confidence in domain rules and API boundaries
 rather than maximising coverage percentage.
 
 ## Running Locally

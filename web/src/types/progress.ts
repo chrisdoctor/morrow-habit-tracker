@@ -8,7 +8,6 @@ export type HabitProgress = {
   id: number
   name: string
   unit: string
-  targetValue: number
   currentStreak: number
   completedDays: number
   days: ProgressDay[]

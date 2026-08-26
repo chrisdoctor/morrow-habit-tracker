@@ -7,7 +7,6 @@ export type Habit = {
   userId: number;
   name: string;
   unit: string;
-  targetValue: number;
   frequency: string;
   isActive: boolean;
 };
@@ -24,7 +23,6 @@ type HabitRow = RowDataPacket & {
   user_id: number;
   name: string;
   unit: string;
-  target_value: string;
   frequency: string;
   is_active: 0 | 1;
 };
@@ -48,7 +46,6 @@ export async function findHabitsByUserId(userId: number): Promise<Habit[]> {
         user_id,
         name,
         unit,
-        target_value,
         frequency,
         is_active
       FROM habits
@@ -64,7 +61,6 @@ export async function findHabitsByUserId(userId: number): Promise<Habit[]> {
     userId: row.user_id,
     name: row.name,
     unit: row.unit,
-    targetValue: Number(row.target_value),
     frequency: row.frequency,
     isActive: Boolean(row.is_active),
   }));

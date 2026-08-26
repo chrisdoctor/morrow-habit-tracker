@@ -21,13 +21,11 @@ export function HabitCard({
       <div className="habit-main">
         <div>
           <h3>{habit.name}</h3>
-          <p>
-            Target {habit.targetValue} {habit.unit}
-          </p>
+          <p>Track daily {habit.unit}</p>
         </div>
         <div className="habit-stats">
-          <span>{habit.currentStreak} day streak</span>
-          <span>{habit.completedDays}/7 complete</span>
+          <span>Current streak: {habit.currentStreak} days</span>
+          <span>This week: {habit.completedDays}/7 days logged</span>
         </div>
       </div>
 

@@ -6,7 +6,6 @@ export type ProgressSourceRow = RowDataPacket & {
   habit_id: number;
   name: string;
   unit: string;
-  target_value: string;
   frequency: string;
   log_date: string | null;
   log_value: string | null;
@@ -42,7 +41,6 @@ export async function findProgressSourceRows(input: {
         h.id AS habit_id,
         h.name,
         h.unit,
-        h.target_value,
         h.frequency,
         DATE_FORMAT(l.log_date, '%Y-%m-%d') AS log_date,
         l.value AS log_value

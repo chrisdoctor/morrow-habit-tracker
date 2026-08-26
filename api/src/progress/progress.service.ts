@@ -14,7 +14,6 @@ export type HabitProgress = {
   id: number;
   name: string;
   unit: string;
-  targetValue: number;
   frequency: string;
   weeklyTotal: number;
   completedDays: number;
@@ -35,7 +34,6 @@ type HabitAccumulator = {
   id: number;
   name: string;
   unit: string;
-  targetValue: number;
   frequency: string;
   logsByDate: Map<string, number>;
 };
@@ -75,7 +73,7 @@ export async function getWeeklyProgress(input: {
         return {
           date,
           value,
-          completed: value !== null && value >= habit.targetValue,
+          completed: value !== null,
         };
       });
 
@@ -83,7 +81,6 @@ export async function getWeeklyProgress(input: {
         id: habit.id,
         name: habit.name,
         unit: habit.unit,
-        targetValue: habit.targetValue,
         frequency: habit.frequency,
         weeklyTotal: roundToTwoDecimals(
           days.reduce((total, day) => total + (day.value ?? 0), 0),
@@ -107,7 +104,6 @@ function groupRowsByHabit(rows: ProgressSourceRow[]): HabitAccumulator[] {
         id: row.habit_id,
         name: row.name,
         unit: row.unit,
-        targetValue: Number(row.target_value),
         frequency: row.frequency,
         logsByDate: new Map<string, number>(),
       };
@@ -127,16 +123,13 @@ function calculateCurrentStreak(
   today: string,
 ): number {
   const todayValue = habit.logsByDate.get(today);
-  let currentDate =
-    todayValue !== undefined && todayValue >= habit.targetValue
-      ? today
-      : addDays(today, -1);
+  let currentDate = todayValue !== undefined ? today : addDays(today, -1);
   let streak = 0;
 
   while (true) {
     const value = habit.logsByDate.get(currentDate);
 
-    if (value === undefined || value < habit.targetValue) {
+    if (value === undefined) {
       return streak;
     }
 

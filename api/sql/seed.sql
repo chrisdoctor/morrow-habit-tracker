@@ -9,15 +9,13 @@ INSERT INTO habits (
   user_id,
   name,
   unit,
-  target_value,
   frequency
 )
 VALUES
-  (1, 1, 'Sleep', 'hours', 7.00, 'daily'),
-  (2, 1, 'Exercise', 'minutes', 30.00, 'daily'),
-  (3, 1, 'Water', 'litres', 2.00, 'daily')
+  (1, 1, 'Sleep', 'hours', 'daily'),
+  (2, 1, 'Exercise', 'minutes', 'daily'),
+  (3, 1, 'Water', 'litres', 'daily')
 ON DUPLICATE KEY UPDATE
   name = VALUES(name),
   unit = VALUES(unit),
-  target_value = VALUES(target_value),
   frequency = VALUES(frequency);

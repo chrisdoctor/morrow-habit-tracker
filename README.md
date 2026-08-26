@@ -60,8 +60,7 @@ initial exercise scope, so the application will use a seeded/demo user.
 Represents a user-specific health behaviour with:
 
 -   name;
--   unit;
--   frequency.
+-   unit.
 
 The initial implementation assumes daily habits.
 
@@ -78,12 +77,7 @@ duplicate.
 **MySQL** is used for the initial implementation.
 
 The core model is relational and benefits from database-enforced
-relationships and uniqueness constraints. It also provides a
-straightforward path for future relationships around users, habits,
-goals, programmes, or other health-related entities.
-
-Habit-specific supplementary data can use JSON where appropriate without
-requiring a second datastore.
+relationships and uniqueness constraints.
 
 Initial schema:
 
@@ -92,7 +86,6 @@ users
 -----
 id
 name
-timezone
 created_at
 updated_at
 
@@ -102,8 +95,6 @@ id
 user_id
 name
 unit
-frequency
-is_active
 created_at
 updated_at
 
@@ -113,7 +104,6 @@ id
 habit_id
 log_date
 value
-metadata
 created_at
 updated_at
 
@@ -163,12 +153,10 @@ If today's habit has not yet been completed, the streak is calculated
 from yesterday so an in-progress day does not immediately break an
 existing streak.
 
-### Dates and Timezones
+### Dates
 
-Habit tracking is based on the user's local calendar date rather than
-server-local or UTC calendar dates.
-
-Habit logs use a local calendar date for streak and weekly-progress calculations. Audit timestamps are stored separately in UTC.
+Habit tracking is based on calendar dates. Audit timestamps are stored
+separately.
 
 ## Testing Priorities
 
@@ -176,7 +164,7 @@ Testing will focus primarily on behaviour where correctness matters
 most:
 
 -   streak calculation;
--   completion thresholds;
+-   logged-day completion;
 -   gaps and empty history;
 -   week boundaries;
 -   local-date handling;

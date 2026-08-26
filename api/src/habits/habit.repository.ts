@@ -7,8 +7,6 @@ export type Habit = {
   userId: number;
   name: string;
   unit: string;
-  frequency: string;
-  isActive: boolean;
 };
 
 export type HabitLog = {
@@ -23,8 +21,6 @@ type HabitRow = RowDataPacket & {
   user_id: number;
   name: string;
   unit: string;
-  frequency: string;
-  is_active: 0 | 1;
 };
 
 type HabitLogRow = RowDataPacket & {
@@ -34,10 +30,6 @@ type HabitLogRow = RowDataPacket & {
   value: string;
 };
 
-type UserTimezoneRow = RowDataPacket & {
-  timezone: string;
-};
-
 export async function findHabitsByUserId(userId: number): Promise<Habit[]> {
   const [rows] = await db.execute<HabitRow[]>(
     `
@@ -45,12 +37,9 @@ export async function findHabitsByUserId(userId: number): Promise<Habit[]> {
         id,
         user_id,
         name,
-        unit,
-        frequency,
-        is_active
+        unit
       FROM habits
       WHERE user_id = ?
-        AND is_active = TRUE
       ORDER BY id
     `,
     [userId],
@@ -61,8 +50,6 @@ export async function findHabitsByUserId(userId: number): Promise<Habit[]> {
     userId: row.user_id,
     name: row.name,
     unit: row.unit,
-    frequency: row.frequency,
-    isActive: Boolean(row.is_active),
   }));
 }
 
@@ -76,27 +63,12 @@ export async function habitExistsForUser(
       FROM habits
       WHERE id = ?
         AND user_id = ?
-        AND is_active = TRUE
       LIMIT 1
     `,
     [habitId, userId],
   );
 
   return rows.length > 0;
-}
-
-export async function findUserTimezone(userId: number): Promise<string | null> {
-  const [rows] = await db.execute<UserTimezoneRow[]>(
-    `
-      SELECT timezone
-      FROM users
-      WHERE id = ?
-      LIMIT 1
-    `,
-    [userId],
-  );
-
-  return rows[0]?.timezone ?? null;
 }
 
 export async function upsertHabitLog(input: {

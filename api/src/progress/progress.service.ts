@@ -1,6 +1,5 @@
 import {
   findProgressSourceRows,
-  findUserTimezone,
   type ProgressSourceRow,
 } from "./progress.repository.js";
 
@@ -14,7 +13,6 @@ export type HabitProgress = {
   id: number;
   name: string;
   unit: string;
-  frequency: string;
   weeklyTotal: number;
   completedDays: number;
   currentStreak: number;
@@ -34,7 +32,6 @@ type HabitAccumulator = {
   id: number;
   name: string;
   unit: string;
-  frequency: string;
   logsByDate: Map<string, number>;
 };
 
@@ -42,15 +39,9 @@ export async function getWeeklyProgress(input: {
   userId: number;
   weekDate: string;
 }): Promise<WeeklyProgress> {
-  const timezone = await findUserTimezone(input.userId);
-
-  if (timezone === null) {
-    throw new Error(`User ${input.userId} was not found`);
-  }
-
   const weekStart = getMonday(input.weekDate);
   const weekEnd = addDays(weekStart, 6);
-  const today = getTodayInTimezone(timezone);
+  const today = getLocalDateString(new Date());
   const rows = await findProgressSourceRows({
     userId: input.userId,
     throughDate: today,
@@ -81,7 +72,6 @@ export async function getWeeklyProgress(input: {
         id: habit.id,
         name: habit.name,
         unit: habit.unit,
-        frequency: habit.frequency,
         weeklyTotal: roundToTwoDecimals(
           days.reduce((total, day) => total + (day.value ?? 0), 0),
         ),
@@ -104,7 +94,6 @@ function groupRowsByHabit(rows: ProgressSourceRow[]): HabitAccumulator[] {
         id: row.habit_id,
         name: row.name,
         unit: row.unit,
-        frequency: row.frequency,
         logsByDate: new Map<string, number>(),
       };
       habitsById.set(row.habit_id, habit);
@@ -171,20 +160,10 @@ function formatDate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function getTodayInTimezone(timezone: string): string {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
-  const year = parts.find((part) => part.type === "year")?.value;
-  const month = parts.find((part) => part.type === "month")?.value;
-  const day = parts.find((part) => part.type === "day")?.value;
-
-  if (year === undefined || month === undefined || day === undefined) {
-    throw new Error(`Could not determine today for timezone ${timezone}`);
-  }
+function getLocalDateString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 }

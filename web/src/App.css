@@ -1,0 +1,52 @@
+.app-shell {
+  width: min(720px, 100%);
+  margin: 0 auto;
+  padding: 48px 24px;
+  box-sizing: border-box;
+}
+
+.page-header {
+  margin-bottom: 28px;
+}
+
+.page-header p {
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.habit-panel {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.habit-panel h2 {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.status {
+  padding: 24px;
+  color: var(--muted);
+}
+
+.status.error {
+  color: #b42318;
+}
+
+.habit-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.habit-list li {
+  padding: 18px 24px;
+  color: var(--text-strong);
+  font-weight: 600;
+}
+
+.habit-list li + li {
+  border-top: 1px solid var(--border);
+}

@@ -1,0 +1,47 @@
+:root {
+  --background: #f7f8f5;
+  --panel: #ffffff;
+  --text: #30352f;
+  --text-strong: #101510;
+  --muted: #687066;
+  --border: #dde2d7;
+
+  font: 16px/1.5 system-ui, 'Segoe UI', Roboto, sans-serif;
+  color: var(--text);
+  background: var(--background);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  color-scheme: light;
+}
+
+#root {
+  min-height: 100svh;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+}
+
+h1,
+h2 {
+  color: var(--text-strong);
+  margin: 0;
+}
+
+h1 {
+  font-size: 40px;
+  line-height: 1.1;
+}
+
+h2 {
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+p {
+  margin: 0;
+}

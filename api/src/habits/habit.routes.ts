@@ -114,5 +114,5 @@ function parseLogValue(body: unknown): number | null {
     return null;
   }
 
-  return Math.round(value * 100) / 100;
+  return value;
 }

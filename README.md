@@ -2,7 +2,9 @@
 
 Small full-stack habit-tracking feature
 
-## Initial Scope
+## Implementation Overview
+
+### Initial Scope
 
 The application will provide:
 
@@ -16,31 +18,33 @@ The application will provide:
 The initial implementation is intentionally focused on the requested
 feature slice rather than a complete habit-management product.
 
-## Initial Architecture
+### Initial Architecture
 
 ``` text
 React + TypeScript
         |
         | REST
         v
-Node.js + TypeScript
+Express routes
         |
-   Controllers
+   Route handlers
         |
-     Services
+   Services
         |
-   Data Access
+   Repositories
         |
         v
       MySQL
 ```
 
-Domain and progress rules will live on the backend rather than being
-independently reimplemented in React.
+Routes handle HTTP concerns and validation. Progress rules live in a
+backend service, while repositories own explicit SQL access. React
+renders server-provided progress rather than independently calculating
+streaks or weekly completion.
 
-## Domain Model
+### Domain Model
 
-The initial model is intentionally small:
+
 
 ``` text
 User
@@ -50,12 +54,12 @@ User
         +-- HabitLog
 ```
 
-### User
+#### User
 
 Represents the owner of the habits. Authentication is outside the
 initial exercise scope, so the application will use a seeded/demo user.
 
-### Habit
+#### Habit
 
 Represents a user-specific health behaviour with:
 
@@ -64,7 +68,7 @@ Represents a user-specific health behaviour with:
 
 The initial implementation assumes daily habits.
 
-### HabitLog
+#### HabitLog
 
 Represents the recorded value for a habit on a local calendar date.
 
@@ -72,7 +76,7 @@ A habit may have at most one effective log per date. Logging the same
 habit/date again updates the existing record rather than creating a
 duplicate.
 
-## Database Choice
+### Database Choice
 
 **MySQL** is used for the initial implementation.
 
@@ -110,7 +114,7 @@ updated_at
 UNIQUE (habit_id, log_date)
 ```
 
-## Initial API
+### API Endpoints
 
 ``` text
 GET /api/habits
@@ -133,48 +137,181 @@ Returns the user's habit progress for the requested week, including
 current streak and weekly completion information.
 
 
-## Assumptions
-
-### Completion
-
-For the initial implementation, a habit is completed for a day when a
-log exists for that habit on that local calendar date.
-
-### Week
-
-A week runs from **Monday to Sunday**.
-
-### Streak
-
-A current streak is the number of consecutive local calendar days on
-which the habit has a log.
-
-If today's habit has not yet been completed, the streak is calculated
-from yesterday so an in-progress day does not immediately break an
-existing streak.
-
-### Dates
-
-Habit tracking is based on calendar dates. Audit timestamps are stored
-separately.
-
-## Testing Priorities
-
-Testing will focus primarily on behaviour where correctness matters
-most:
-
--   streak calculation;
--   logged-day completion;
--   gaps and empty history;
--   week boundaries;
--   local-date handling;
--   create/update behaviour for daily logs;
--   validation and API error handling;
--   basic dashboard behaviour.
-
-The goal is focused confidence in domain rules and API boundaries
-rather than maximising coverage percentage.
-
 ## Running Locally
 
-ToDo: Local setup instructions
+1. Create root environment variables:
+
+``` sh
+cp .env.example .env
+```
+
+Fill in the MySQL passwords in `.env`.
+
+2. Start MySQL:
+
+``` sh
+docker compose up -d mysql
+```
+
+3. Apply the schema and seed data from the repo root:
+
+``` sh
+docker compose exec -T mysql sh -c 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' < api/sql/schema.sql
+docker compose exec -T mysql sh -c 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' < api/sql/seed.sql
+```
+
+4. Create API environment variables:
+
+``` sh
+cp api/.env.example api/.env
+```
+
+The root `.env` configures the local MySQL container. `api/.env`
+configures how the API connects to that container. For this take-home exercise
+setup, we need to keep the overlapping MySQL values aligned.
+
+5. Install and run the API:
+
+``` sh
+cd api
+npm install
+npm run dev
+```
+
+6. Install and run the frontend in a second terminal:
+
+``` sh
+cd web
+npm install
+npm run dev
+```
+
+The frontend runs through Vite and proxies `/api` requests to the API on
+port `3000` to avoid CORS issues.
+
+## Assumptions and Edge Cases
+
+The implementation uses a seeded demo user rather than authentication.
+Each habit belongs to that demo user, and all API calls operate in that
+context.
+
+A habit is considered complete for a day when a log exists for that
+habit/date. The numeric value is stored and displayed, but it does not
+affect completion or streaks.
+
+A habit can have only one effective log per calendar date. Re-logging
+the same habit/date updates the existing row through a database
+uniqueness constraint and upsert.
+
+The requested week is interpreted as the Monday-Sunday week containing
+the `week=YYYY-MM-DD` query date. Invalid dates and malformed dates
+return `400`.
+
+Current streak is calculated from today if today has a log. If today has
+not been logged yet, the streak is calculated from yesterday so an
+in-progress day does not immediately break an existing streak.
+
+Future-dated logs are rejected. Progress only considers logs through the
+current calendar date.
+
+Deliberately not handled in this slice:
+
+-   authentication or multiple real users;
+-   habit creation, editing, archiving, or deletion;
+-   custom week starts;
+-   per-user timezones;
+-   migrations beyond applying the SQL files manually;
+-   automated test coverage;
+-   partial-day audit history for multiple submissions on the same day.
+
+## Production Considerations
+
+- For production, I would integrate authentication and derive the current user
+from the request rather than using a seeded user.
+
+- I would replace manual SQL application with versioned migrations. 
+Right now the database is created manually by running:
+```
+api/sql/schema.sql
+api/sql/seed.sql
+```
+
+In production, I would use migration files:
+```
+001_create_users.sql
+002_create_habits.sql
+003_create_habit_logs.sql
+```
+
+Each migration runs once, in order.
+
+- I would add tests that run automatically, especially for logic where regressions are easy:
+   - streak calculation
+   - invalid dates like 2026-02-31
+   - same habit/date update behavior
+   - 400 and 404 API responses
+
+- I would centralize shared date parsing/formatting on the backend. I would also add support for multi-region users and add explicit timezone handling. The current version uses simple calendar dates because the exercise is scoped to a small feature slice.
+
+- I would replace the simple catch-all error handler with structured logging and clearer handling for expected application errors.
+
+- I would add frontend tests for loading, error, progress rendering, and
+the write-then-refresh flow.
+
+- I would clean up unused Vite starter files and add scripts that make local setup less manual.
+
+## AI Tools Used
+
+I used Codex as an implementation and review assistant
+during the exercise. I used it primarily to:
+
+-   scaffold repetitive TypeScript/Express and React code after defining
+    the intended structure
+-   generate initial SQL/query implementations from an established data
+    model
+-   suggest edge cases for manual testing
+-   review implementation details such as MySQL typing, date handling,
+    and API error paths
+-   accelerate small refactors once the desired behaviour was already
+    defined
+
+I kept architectural and product decisions outside the coding agent, then used AI to implement or review those decisions.
+
+## Where AI Helped
+
+AI was particularly useful for reducing time spent on mechanical
+implementation. For example, after defining the repository/service
+boundaries and API contract, I used it to generate typed `mysql2`
+repository mappings and repetitive request-handling code.
+
+It was also useful as a second reviewer. For the progress calculation, I
+asked AI to enumerate edge cases around streaks, week boundaries, missing
+logs, and date handling. I then manually exercised the relevant cases
+against the running application.
+
+## Where I Overrode Or Corrected AI
+
+There were several cases where I deliberately rejected or changed AI
+suggestions:
+
+-   Avoided premature dependencies. AI initially suggested Zod for
+    runtime validation and Vitest during initial scaffolding. I kept
+    validation explicit and manual while the API surface was small, and
+    deferred introducing a test framework until enough domain logic
+    existed to justify it.
+-   Simplified repository structure. An initial suggestion used an npm
+    workspace or `apps/` structure. With only two small applications and
+    no shared packages, I removed the workspace structure and kept
+    independently runnable `api/` and `web/` packages.
+-   Corrected an unsupported product assumption. An early implementation
+    introduced habit targets and defined completion as `value >= target`.
+    On reviewing the brief, I determined that target achievement was not
+    actually required. I simplified the model so completion means that a
+    daily log exists, and streaks represent consecutive logged days.
+-   Kept SQL explicit. I chose parameterized `mysql2` queries rather than
+    introducing an ORM. For the size of the exercise, explicit SQL made
+    persistence behaviour and constraints easier to inspect and reason
+    about.
+-   Kept the server authoritative for progress. Rather than duplicating
+    streak/progress calculations in React, I kept those rules in the
+    backend and had the frontend refresh progress after writes.

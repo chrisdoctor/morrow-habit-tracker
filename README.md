@@ -226,8 +226,18 @@ Deliberately not handled in this slice:
 
 ## Production Considerations
 
-- For production, I would integrate authentication and derive the current user
+- For production, I would integrate authentication and authorisation and derive the current user
 from the request rather than using a seeded user.
+
+- I would improve `findProgressSourceRows()` asit retrieves every habit log up through today for the user, even when the caller only wants one week's progress. This is not fine after several years of logs. I would review indexes and either bound the history queried or calculate the current streak more efficiently.
+
+- Right now a day is considered completed when a log exists `(value !== null)`, and the streak increments for every consecutive date containing a log regardless of the logged value. If production habits eventually have targets such as “8 hours sleep” or “30 minutes exercise,” the data model and progress calculation will need to reflect this.
+
+- I am using DECIMAL(10,2) in the db, but the API currently accepts any number, such as 1.234567. I need to define whether such values are rejected or rounded rather than relying implicitly on database conversion.
+
+- I would add rate limiting, appropriate CORS/security-header configuration, request correlation IDs, metrics/monitoring, backup/restore procedures, and CI/CD deployment checks.
+
+- I would add validation of production configuration at startup. Production should fail fast with a clear configuration error.
 
 - I would replace manual SQL application with versioned migrations. 
 Right now the database is created manually by running:
@@ -236,7 +246,7 @@ api/sql/schema.sql
 api/sql/seed.sql
 ```
 
-In production, I would use migration files:
+I would use migration files:
 ```
 001_create_users.sql
 002_create_habits.sql
@@ -258,7 +268,7 @@ Each migration runs once, in order.
 - I would add frontend tests for loading, error, progress rendering, and
 the write-then-refresh flow.
 
-- I would clean up unused Vite starter files and add scripts that make local setup less manual.
+- I would add graceful shutdown and proper readiness checks. The server currently checks the DB once before listening, which is good, but there is no SIGTERM/SIGINT handling to stop accepting requests and close the MySQL pool cleanly.
 
 ## AI Tools Used
 
